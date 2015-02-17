@@ -5,15 +5,17 @@ var htmlrunner,
 
 phantom.injectJs("lib/utils/core.js")
 
-if ( phantom.args.length !== 2 ) {
+var system = require('system');
+
+if ( system.args.length !== 3 ) {
     console.log("Usage: phantom_test_runner.js HTML_RUNNER RESULT_DIR");
     phantom.exit();
 } else {
-    htmlrunner = phantom.args[0];
-    resultdir = phantom.args[1];
+    htmlrunner = system.args[1];
+    resultdir = system.args[2];
     page = require("webpage").create();
     fs = require("fs");
-    
+
     // Echo the output of the tests to the Standard Output
     page.onConsoleMessage = function(msg, source, linenumber) {
         console.log(msg);
@@ -31,7 +33,7 @@ if ( phantom.args.length !== 2 ) {
                     suitesResults = page.evaluate(function(){
                     return jasmine.phantomjsXMLReporterResults;
                 });
-                
+
                 // Save the result of the tests in files
                 for ( i = 0, len = suitesResults.length; i < len; ++i ) {
                     try {
@@ -43,12 +45,13 @@ if ( phantom.args.length !== 2 ) {
                         console.log("phantomjs> Unable to save result of Suite '"+ suitesResults[i]["xmlfilename"] +"'");
                     }
                 }
-                
+
                 // Return the correct exit status. '0' only if all the tests passed
                 phantom.exit(page.evaluate(function(){
                     return jasmine.phantomjsXMLReporterPassed ? 0 : 1; //< exit(0) is success, exit(1) is failure
                 }));
             }, function() { // or, once it timesout...
+                console.log("phantomjs> timeout");
                 phantom.exit(1);
             });
         } else {
